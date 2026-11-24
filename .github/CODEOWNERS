@@ -1,0 +1,6 @@
+# Code Owners - ClientSphere Enterprise CRM
+* @crm-core-team
+/server/ @crm-backend-maintainers
+/services/analytics/ @data-intelligence-team
+/client/ @crm-frontend-maintainers
+/docs/ @architecture-team

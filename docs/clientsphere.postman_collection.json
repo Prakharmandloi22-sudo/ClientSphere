@@ -1,0 +1,133 @@
+{
+  "info": {
+    "name": "ClientSphere Enterprise CRM API Collection",
+    "description": "Comprehensive Postman test collection covering all 15 hands-on assessments and the Capstone challenge.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@clientsphere.internal\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "refresh"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leads & Scoring",
+      "item": [
+        {
+          "name": "Create Lead (Explainable Scoring & Dedup)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jordan\",\n  \"lastName\": \"Miller\",\n  \"email\": \"jordan.miller@frontierbio.com\",\n  \"phone\": \"+1-555-8811\",\n  \"companyName\": \"Frontier Biotech\",\n  \"title\": \"Vice President of Research\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/leads", "host": ["{{baseUrl}}"], "path": ["api", "v1", "leads"] }
+          }
+        },
+        {
+          "name": "Convert Lead to Opportunity",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"opportunityName\": \"Frontier Biotech Cloud Expansion\",\n  \"amount\": 125000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/leads/{{leadId}}/convert", "host": ["{{baseUrl}}"], "path": ["api", "v1", "leads", "{{leadId}}", "convert"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Many-to-Many Contacts & Companies",
+      "item": [
+        {
+          "name": "Associate Contact with Additional Company",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyId\": \"{{companyId}}\",\n  \"roleTitle\": \"Advisory Board Chair\",\n  \"isPrimary\": false\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/contacts/{{contactId}}/companies", "host": ["{{baseUrl}}"], "path": ["api", "v1", "contacts", "{{contactId}}", "companies"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pipeline & Concurrency",
+      "item": [
+        {
+          "name": "Update Opportunity (Optimistic Lock Version Check)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 180000,\n  \"stageId\": \"stage-3-proposal\",\n  \"version\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/opportunities/{{oppId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "opportunities", "{{oppId}}"] }
+          }
+        },
+        {
+          "name": "Add Opportunity Team Collaborator",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user-rep-2\",\n  \"role\": \"COLLABORATOR\",\n  \"accessLevel\": \"WRITE\",\n  \"splitPercentage\": 25.0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/opportunities/{{oppId}}/team", "host": ["{{baseUrl}}"], "path": ["api", "v1", "opportunities", "{{oppId}}", "team"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" }
+  ]
+}

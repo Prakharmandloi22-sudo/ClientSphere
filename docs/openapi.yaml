@@ -1,0 +1,234 @@
+openapi: 3.0.3
+info:
+  title: ClientSphere Enterprise CRM REST API
+  description: Authoritative business API for ClientSphere Enterprise CRM, Sales Pipeline & Workflow Automation Platform.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local Development Server
+  - url: https://api.clientsphere.internal/api/v1
+    description: Production Enterprise Gateway
+
+paths:
+  /auth/login:
+    post:
+      summary: User Authentication & JWT Issuance
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email, example: "admin@clientsphere.internal" }
+                password: { type: string, format: password, example: "Password123!" }
+      responses:
+        '200':
+          description: Successfully authenticated with tokens and user claims
+        '401':
+          description: Invalid credentials
+
+  /auth/refresh:
+    post:
+      summary: Refresh Access Token
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200':
+          description: New access and refresh token issued
+
+  /leads:
+    get:
+      summary: List Leads with Filtering & Pagination
+      tags: [Leads]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: status
+          schema: { type: string, enum: [NEW, CONTACTED, QUALIFIED, UNQUALIFIED, CONVERTED] }
+        - in: query
+          name: q
+          schema: { type: string }
+      responses:
+        '200':
+          description: Paginated leads list
+    post:
+      summary: Create Lead with Automated Deduplication & Scoring
+      tags: [Leads]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [firstName, lastName, email]
+              properties:
+                firstName: { type: string }
+                lastName: { type: string }
+                email: { type: string, format: email }
+                phone: { type: string }
+                companyName: { type: string }
+                title: { type: string }
+      responses:
+        '201':
+          description: Lead created with calculated explainable score
+        '409':
+          description: Duplicate lead detected
+
+  /leads/{id}/convert:
+    post:
+      summary: Transactional Lead Conversion
+      description: Atomically converts lead into Contact, Company, and Opportunity in one transaction.
+      tags: [Leads]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                opportunityName: { type: string }
+                amount: { type: number }
+      responses:
+        '200':
+          description: Lead converted successfully
+
+  /contacts:
+    get:
+      summary: List Contacts with Associated Companies
+      tags: [Contacts]
+      responses:
+        '200':
+          description: Contacts list
+
+  /contacts/{id}/companies:
+    post:
+      summary: Associate Contact with Multiple Companies (Many-to-Many)
+      tags: [Contacts]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [companyId]
+              properties:
+                companyId: { type: string }
+                roleTitle: { type: string }
+                isPrimary: { type: boolean }
+      responses:
+        '201':
+          description: Associated successfully
+        '409':
+          description: Relationship already exists
+
+  /opportunities:
+    get:
+      summary: List Opportunities
+      tags: [Opportunities]
+      responses:
+        '200':
+          description: Opportunities list
+
+  /opportunities/{id}:
+    put:
+      summary: Update Opportunity with Optimistic Concurrency Control
+      tags: [Opportunities]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                version: { type: integer, description: "Current record version for optimistic locking" }
+                stageId: { type: string }
+                amount: { type: number }
+                name: { type: string }
+      responses:
+        '200':
+          description: Opportunity updated and version incremented
+        '409':
+          description: Concurrent modification conflict detected
+
+  /opportunities/{id}/team:
+    post:
+      summary: Add Collaborator to Opportunity Team
+      tags: [Opportunities]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, role, accessLevel]
+              properties:
+                userId: { type: string }
+                role: { type: string, enum: [LEAD, COLLABORATOR, SPECIALIST, VIEWER] }
+                accessLevel: { type: string, enum: [READ, WRITE, ADMIN] }
+                splitPercentage: { type: number }
+      responses:
+        '201':
+          description: Added to collaboration team
+
+  /pipelines/{id}/kanban:
+    get:
+      summary: Get Kanban Stage Aggregations & Deals
+      tags: [Pipelines]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Kanban columns with amounts and probabilities
+
+  /integrations/telephony/webhook:
+    post:
+      summary: Signature-Verified Telephony Inbound Webhook
+      tags: [Integrations]
+      parameters:
+        - in: header
+          name: x-telephony-signature
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Call logged and contact matched
